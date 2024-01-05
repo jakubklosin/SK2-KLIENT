@@ -2,6 +2,8 @@ package org.example;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.ArrayList;
 import java.util.List;
 import org.json.JSONArray;
@@ -38,12 +40,17 @@ public class QuizClient {
     private JPanel createQuestionPanel(int questionIndex) {
         JPanel questionPanel = new JPanel(new GridLayout(0, 1));
         JTextField questionField = new JTextField();
+        questionPanel.add(new JLabel("Podaj poprawną odpowiedź jako pierwszą.", SwingConstants.CENTER));
+        questionPanel.add(questionField);
         questionPanel.add(new JLabel("Pytanie:", SwingConstants.CENTER));
         questionPanel.add(questionField);
 
         JTextField[] answerFields = new JTextField[4];
         for (int i = 0; i < 4; i++) {
             answerFields[i] = new JTextField();
+            if(i==0){
+                answerFields[i].setBackground(Color.decode("#98FF98"));
+            }
             questionPanel.add(new JLabel("Odpowiedź " + (i + 1) + ":", SwingConstants.CENTER));
             questionPanel.add(answerFields[i]);
         }
@@ -108,6 +115,14 @@ public class QuizClient {
         mainPanel.setLayout(new BorderLayout());
         JLabel codeLabel = new JLabel("Kod twojego pokoju: " + roomCode, SwingConstants.CENTER);
         mainPanel.add(codeLabel, BorderLayout.CENTER);
+        JButton startGameButton = new JButton("Rozpocznij grę");
+        startGameButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                // Obsłuż rozpoczęcie gry
+            }
+        });
+        mainPanel.add(startGameButton, BorderLayout.SOUTH);
         frame.revalidate();
         frame.repaint();
     }
