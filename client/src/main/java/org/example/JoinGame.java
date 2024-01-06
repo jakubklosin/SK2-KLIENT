@@ -49,7 +49,7 @@ public class JoinGame {
                 try {
                     JSONObject joinRequest = new JSONObject();
                     joinRequest.put("action", "join");
-                    joinRequest.put("RoomId", roomNumberField.getText());
+                    joinRequest.put("kod pokoju", roomNumberField.getText());
                     String jsonStr = joinRequest.toString();
 
                     // Przygotowanie długości wiadomości

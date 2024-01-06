@@ -83,6 +83,7 @@ public class QuizClient {
         try {
             roomCode = generateRoomCode();
             JSONObject quizJson = new JSONObject();
+            quizJson.put("action", "create");
             quizJson.put("pytania", new JSONArray(questionsAndAnswersList));
             quizJson.put("kod pokoju", roomCode);
             String jsonStr = quizJson.toString();
