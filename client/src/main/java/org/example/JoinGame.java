@@ -1,5 +1,6 @@
 package org.example;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -102,7 +103,7 @@ public class JoinGame {
                 String responseStr = new String(responseBytes);
 
                 // Wypisanie odebranego ciągu znaków
-                System.out.println("Odebrano: " + responseStr);
+                //System.out.println("Odebrano: " + responseStr);
 
                 // Próba przekształcenia na JSONObject
                 JSONObject response = new JSONObject(responseStr);
@@ -115,13 +116,17 @@ public class JoinGame {
 
 
     private void processResponse(JSONObject response) {
-        // Logika przetwarzania odpowiedzi, na przykład:
-        // Wyświetlenie komunikatu o stanie gry, wyświetlenie pytań itp.
-        // Ta metoda powinna być wykonana w wątku Swing (EDT)
         SwingUtilities.invokeLater(() -> {
-            JOptionPane.showMessageDialog(frame, response.toString());
+            if (response.has("pytania")) {
+                JSONArray questions = response.getJSONArray("pytania");
+
+                // Rozpoczęcie nowej sesji quizu z pytaniami
+                GameSession gameSession = new GameSession(frame);
+                gameSession.setQuestionsList(questions);
+            } else {
+                JOptionPane.showMessageDialog(frame, "Błąd: " + response.toString());
+            }
         });
     }
-
 
 }

@@ -5,78 +5,158 @@ import org.json.JSONObject;
 
 import javax.swing.*;
 import java.awt.*;
-import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
 public class GameSession {
     private JFrame frame;
-    private NetworkConnection networkConnection;
     private List<JSONObject> questionsList;
-    private int currentQuestionIndex = 0;
     private CardLayout cardLayout;
     private JPanel mainPanel;
+    private JButton selectedAnswerButton = null; //Aktualnie wybrana odpowiedz
 
-    public GameSession(JFrame frame, NetworkConnection networkConnection) {
+    private int currentQuestionIndex = 0;
+    public GameSession(JFrame frame) {
         this.frame = frame;
-        this.networkConnection = networkConnection;
         this.questionsList = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
         frame.add(mainPanel);
     }
 
-    public void startSession() {
-        // Oczekiwanie na pytania od serwera
-        new Thread(() -> {
-            try {
-                byte[] lengthBytes = networkConnection.receive(4);
-                ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
-                int length = wrapped.getInt();
+    public void setQuestionsList(JSONArray questions) {
+        questionsList.clear();
+        for (int i = 0; i < questions.length(); i++) {
+            questionsList.add(questions.getJSONObject(i));
+        }
+        // Wyświetlenie pytań na całym oknie po ich ustawieniu
+        //SwingUtilities.invokeLater(this::displayQuestions);
+        currentQuestionIndex = 0; //Reset biezacego indeksu pytania przy ustawianiu nowej listy pytań
+        displayQuestion();
+    }
 
-                byte[] messageBytes = networkConnection.receive(length);
-                String messageStr = new String(messageBytes);
-                JSONObject response = new JSONObject(messageStr);
+    private void displayQuestion() {
+        // Usunięcie wszystkich poprzednich komponentów
+        frame.getContentPane().removeAll();
+        frame.setLayout(new BorderLayout()); // Ustawienie BorderLayout dla ramki
 
-                // Sprawdzenie, czy odpowiedź zawiera pytania
-                if (response.has("questions")) {
-                    JSONArray questions = response.getJSONArray("questions");
-                    for (int i = 0; i < questions.length(); i++) {
-                        questionsList.add(questions.getJSONObject(i));
-                    }
+        if (currentQuestionIndex < questionsList.size()) {
+            // Pobranie bieżącego pytania na podstawie indeksu
+            JSONObject question = questionsList.get(currentQuestionIndex);
+            JPanel questionPanel = createQuestionPanel(question);
 
-                    // Wyświetlanie pytań
-                    SwingUtilities.invokeLater(this::displayQuestions);
+            // Dodanie panelu pytania do głównego kontenera
+            frame.getContentPane().add(questionPanel, BorderLayout.CENTER);
+
+            // Dodanie przycisku "Dalej"
+            JButton nextButton = new JButton("Dalej");
+            nextButton.addActionListener(e -> {
+                if (selectedAnswerButton != null) {
+                    // Podświetlenie wybranej odpowiedzi na zielono
+                    selectedAnswerButton.setBackground(Color.decode("#98FF98"));
+                    selectedAnswerButton.setOpaque(true);
+                    selectedAnswerButton.setBorderPainted(false);
+
+                    // Opóźnienie przejścia do następnego pytania
+                    Timer timer = new Timer(500, event -> {
+                        // Reset wybranej odpowiedzi
+                        selectedAnswerButton.setBackground(UIManager.getColor("Button.background"));
+                        selectedAnswerButton.setOpaque(false);
+                        selectedAnswerButton.setBorderPainted(true);
+                        selectedAnswerButton = null;
+
+                        currentQuestionIndex++; // Zwiększenie indeksu bieżącego pytania
+                        if (currentQuestionIndex < questionsList.size()) {
+                            displayQuestion(); // Wyświetlenie następnego pytania
+                        } else {
+                            displayEndOfQuiz(); // Wyświetlenie końca quizu
+                        }
+                    });
+                    timer.setRepeats(false);
+                    timer.start();
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Proszę wybrać odpowiedź przed przejściem dalej.");
                 }
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }).start();
-    }
+            });
 
-    private void displayQuestions() {
-        if (questionsList.isEmpty()) {
-            return; // Brak pytań do wyświetlenia
+            // Panel na przycisk "Dalej"
+            JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonPanel.add(nextButton);
+            frame.getContentPane().add(buttonPanel, BorderLayout.PAGE_END);
+        } else {
+            displayEndOfQuiz(); // Wyświetlenie końca quizu
         }
 
-        // Tworzenie widoków dla każdego pytania
-        for (int i = 0; i < questionsList.size(); i++) {
-            mainPanel.add(createQuestionPanel(questionsList.get(i), i), "QuestionCard" + i);
-        }
-        cardLayout.show(mainPanel, "QuestionCard0");
+        // Odświeżenie i przerysowanie ramki
         frame.revalidate();
+        frame.repaint();
     }
 
-    private JPanel createQuestionPanel(JSONObject question, int questionIndex) {
-        // Tutaj logika tworzenia panelu dla każdego pytania
-        // Przykładowa implementacja:
+    private void displayEndOfQuiz() {
+        frame.getContentPane().removeAll();
+
+        JLabel endLabel = new JLabel("Koniec quizu");
+        endLabel.setFont(new Font("Arial", Font.BOLD, 30)); // Zwiększenie czcionki
+        endLabel.setHorizontalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w poziomie
+        endLabel.setVerticalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w pionie
+
+        JPanel endPanel = new JPanel();
+        endPanel.setLayout(new GridBagLayout()); // Używamy GridBagLayout dla wyśrodkowania komponentu
+        endPanel.add(endLabel);
+        frame.getContentPane().add(endPanel, BorderLayout.CENTER);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
+
+    private JPanel createQuestionPanel(JSONObject question) {
         JPanel questionPanel = new JPanel();
         questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
+        questionPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie panelu w osi X
 
-        // Dodaj elementy do questionPanel na podstawie obiektu question
+        // Etykieta pytania
+        JLabel questionLabel = new JLabel(question.getString("pytanie"));
+        questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie etykiety w osi X
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Zwiększenie czcionki etykiety
+
+        // Panel na przyciski odpowiedzi
+        JPanel buttonsPanel = new JPanel();
+        buttonsPanel.setLayout(new GridLayout(4, 1, 10, 10)); // GridLayout z marginesami
+        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie panelu przycisków w osi X
+
+        JSONArray answers = question.getJSONArray("odpowiedzi");
+
+        for (int i = 0; i < answers.length(); i++) {
+            String answerText = answers.getString(i);
+            JButton answerButton = new JButton(answerText);
+            answerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, answerButton.getMinimumSize().height)); // Maksymalna szerokość, minimalna wysokość
+            answerButton.addActionListener(e -> handleAnswer(answerButton, answerText));
+            buttonsPanel.add(answerButton); // Dodanie do panelu przycisków
+        }
+
+        // Dodanie komponentów do panelu pytania
+        questionPanel.add(Box.createVerticalGlue()); // Dodanie pustego miejsca na górze
+        questionPanel.add(questionLabel);
+        questionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Dodanie przestrzeni między pytaniem a przyciskami
+        questionPanel.add(buttonsPanel);
+        questionPanel.add(Box.createVerticalGlue()); // Dodanie pustego miejsca na dole
 
         return questionPanel;
     }
+
+    private void handleAnswer(JButton answerButton, String chosenAnswer) {
+        if (selectedAnswerButton != null) {
+            // Opcjonalnie resetuj kolor poprzednio wybranego przycisku, jeśli chcesz zezwolić na zmianę wyboru przed kliknięciem "Dalej"
+            selectedAnswerButton.setBackground(UIManager.getColor("Button.background"));
+            selectedAnswerButton.setOpaque(false);
+            selectedAnswerButton.setBorderPainted(true);
+        }
+
+        selectedAnswerButton = answerButton; // Zapisz referencję do wybranego przycisku
+    }
+
+
 
     // Metody do przełączania pytań, obsługi odpowiedzi itd.
     // ...
