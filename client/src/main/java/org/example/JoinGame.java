@@ -52,16 +52,11 @@ public class JoinGame {
                     joinRequest.put("kod pokoju", roomNumberField.getText());
                     String jsonStr = joinRequest.toString();
 
-                    // Przygotowanie długości wiadomości
-                    int messageLength = jsonStr.getBytes().length;
-                    ByteBuffer buffer = ByteBuffer.allocate(4);
-                    buffer.putInt(messageLength);
-                    byte[] lengthBytes = buffer.array();
+                    // Wysyłanie żądania dołączenia do serwera
+                    sendJoinRequest(jsonStr);
 
-                    // Wysyłanie długości wiadomości
-                    networkConnection.send(lengthBytes);
-                    // Wysyłanie samej wiadomości
-                    networkConnection.send(jsonStr.getBytes());
+                    // Odbieranie odpowiedzi od serwera w nowym wątku
+                    receiveServerResponse();
                 } catch (Exception ex) {
                     ex.printStackTrace();
                 }
@@ -82,6 +77,50 @@ public class JoinGame {
 
         frame.revalidate();
         frame.repaint();
+    }
+
+    private void sendJoinRequest(String jsonStr) {
+        int messageLength = jsonStr.getBytes().length;
+        ByteBuffer buffer = ByteBuffer.allocate(4);
+        buffer.putInt(messageLength);
+        byte[] lengthBytes = buffer.array();
+
+        networkConnection.send(lengthBytes);
+        networkConnection.send(jsonStr.getBytes());
+    }
+
+    private void receiveServerResponse() {
+        new Thread(() -> {
+            try {
+                // Odbieranie długości odpowiedzi
+                byte[] lengthBytes = networkConnection.receive(4);
+                ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
+                int length = wrapped.getInt();
+
+                // Odbieranie samej odpowiedzi
+                byte[] responseBytes = networkConnection.receive(length);
+                String responseStr = new String(responseBytes);
+
+                // Wypisanie odebranego ciągu znaków
+                System.out.println("Odebrano: " + responseStr);
+
+                // Próba przekształcenia na JSONObject
+                JSONObject response = new JSONObject(responseStr);
+                processResponse(response);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+        }).start();
+    }
+
+
+    private void processResponse(JSONObject response) {
+        // Logika przetwarzania odpowiedzi, na przykład:
+        // Wyświetlenie komunikatu o stanie gry, wyświetlenie pytań itp.
+        // Ta metoda powinna być wykonana w wątku Swing (EDT)
+        SwingUtilities.invokeLater(() -> {
+            JOptionPane.showMessageDialog(frame, response.toString());
+        });
     }
 
 

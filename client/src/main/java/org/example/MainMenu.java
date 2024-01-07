@@ -45,7 +45,7 @@ public class MainMenu {
         });
         frame.add(joinGameButton);
 
-        frame.setSize(400, 400);
+        frame.setSize(500, 500);
         frame.setVisible(true);
     }
 
