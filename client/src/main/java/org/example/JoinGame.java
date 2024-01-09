@@ -16,6 +16,8 @@ public class JoinGame {
     private JTextField playerNameField;
 
     private NetworkConnection networkConnection;
+    private String roomCode;
+    private String playerName;
     public JoinGame(JFrame frame) {
         this.frame = frame;
         this.networkConnection = new NetworkConnection();
@@ -60,6 +62,13 @@ public class JoinGame {
         joinButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
+                roomCode = roomNumberField.getText(); // Pobranie kodu pokoju
+                playerName = playerNameField.getText(); //Pobranie nazwy gracza
+
+                if(playerName.isEmpty()) {
+                    JOptionPane.showMessageDialog(frame, "Prosze podać nazwe gracza.");
+                    return;
+                }
                 try {
                     JSONObject joinRequest = new JSONObject();
                     joinRequest.put("action", "join");
@@ -134,7 +143,7 @@ public class JoinGame {
                 JSONArray questions = response.getJSONArray("pytania");
 
                 // Rozpoczęcie nowej sesji quizu z pytaniami
-                GameSession gameSession = new GameSession(frame);
+                GameSession gameSession = new GameSession(frame, roomCode, playerName, networkConnection);
                 gameSession.setQuestionsList(questions);
             } else {
                 JOptionPane.showMessageDialog(frame, "Błąd: " + response.toString());

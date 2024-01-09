@@ -1,6 +1,7 @@
 package org.example;
 
 import org.json.JSONArray;
+import org.json.JSONException;
 import org.json.JSONObject;
 
 import javax.swing.*;
@@ -14,10 +15,15 @@ public class GameSession {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private JButton selectedAnswerButton = null; //Aktualnie wybrana odpowiedz
-
+    private String roomCode; // Kod pokoju
+    private String playerName; // Nazwa gracza
     private int currentQuestionIndex = 0;
-    public GameSession(JFrame frame) {
+    private NetworkConnection networkConnection;
+    public GameSession(JFrame frame, String roomCode, String playerName, NetworkConnection networkConnection) {
         this.frame = frame;
+        this.roomCode = roomCode;
+        this.playerName = playerName;
+        this.networkConnection = networkConnection;
         this.questionsList = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
@@ -56,6 +62,7 @@ public class GameSession {
                     selectedAnswerButton.setBackground(Color.decode("#98FF98"));
                     selectedAnswerButton.setOpaque(true);
                     selectedAnswerButton.setBorderPainted(false);
+                    sendAnswerToServer(selectedAnswerButton.getText());
 
                     // Opóźnienie przejścia do następnego pytania
                     Timer timer = new Timer(500, event -> {
@@ -156,7 +163,19 @@ public class GameSession {
         selectedAnswerButton = answerButton; // Zapisz referencję do wybranego przycisku
     }
 
+    private void sendAnswerToServer(String chosenAnswer) {
+        try {
+            JSONObject answerJson = new JSONObject();
+            answerJson.put("kod pokoju", roomCode);
+            answerJson.put("nickname", playerName);
+            answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
+            answerJson.put("odpowiedź", chosenAnswer);
+            networkConnection.send(answerJson.toString());
 
+        } catch (JSONException e) {
+            e.printStackTrace();
+        }
+    }
 
     // Metody do przełączania pytań, obsługi odpowiedzi itd.
     // ...
