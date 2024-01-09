@@ -167,6 +167,7 @@ public class GameSession {
         try {
             JSONObject answerJson = new JSONObject();
             answerJson.put("kod pokoju", roomCode);
+            answerJson.put("action", "answering");
             answerJson.put("nickname", playerName);
             answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
             answerJson.put("odpowiedź", chosenAnswer);
