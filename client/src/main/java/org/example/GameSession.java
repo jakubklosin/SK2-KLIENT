@@ -6,6 +6,7 @@ import org.json.JSONObject;
 
 import javax.swing.*;
 import java.awt.*;
+import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -166,12 +167,22 @@ public class GameSession {
     private void sendAnswerToServer(String chosenAnswer) {
         try {
             JSONObject answerJson = new JSONObject();
+            answerJson.put("action","answering");
             answerJson.put("kod pokoju", roomCode);
             answerJson.put("nickname", playerName);
             answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
-            answerJson.put("odpowiedź", chosenAnswer);
-            networkConnection.send(answerJson.toString());
+            answerJson.put("odpowiedz", chosenAnswer);
 
+            String ans = answerJson.toString();
+            int messageLength = ans.getBytes().length;
+            ByteBuffer buffer = ByteBuffer.allocate(4);
+            buffer.putInt(messageLength);
+            byte[] lengthBytes = buffer.array();
+
+            // Wysyłanie długości wiadomości
+            networkConnection.send(lengthBytes);
+            // Wysyłanie samej wiadomości
+            networkConnection.send(ans.getBytes());
         } catch (JSONException e) {
             e.printStackTrace();
         }

@@ -86,6 +86,7 @@ public class QuizClient {
             quizJson.put("action", "create");
             quizJson.put("pytania", new JSONArray(questionsAndAnswersList));
             quizJson.put("kod pokoju", roomCode);
+
             String jsonStr = quizJson.toString();
 
             // Przygotowanie długości wiadomości
