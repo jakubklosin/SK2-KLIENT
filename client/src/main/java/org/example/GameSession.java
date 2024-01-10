@@ -63,7 +63,9 @@ public class GameSession {
                     selectedAnswerButton.setBackground(Color.decode("#98FF98"));
                     selectedAnswerButton.setOpaque(true);
                     selectedAnswerButton.setBorderPainted(false);
-                    sendAnswerToServer(selectedAnswerButton.getText());
+
+                    int answerID = Integer.parseInt(selectedAnswerButton.getActionCommand());
+                    sendAnswerToServer(answerID);
 
                     // Opóźnienie przejścia do następnego pytania
                     Timer timer = new Timer(500, event -> {
@@ -100,6 +102,7 @@ public class GameSession {
         frame.repaint();
     }
 
+
     private void displayEndOfQuiz() {
         frame.getContentPane().removeAll();
 
@@ -121,60 +124,60 @@ public class GameSession {
     private JPanel createQuestionPanel(JSONObject question) {
         JPanel questionPanel = new JPanel();
         questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
-        questionPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie panelu w osi X
+        questionPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         // Etykieta pytania
         JLabel questionLabel = new JLabel(question.getString("pytanie"));
-        questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie etykiety w osi X
-        questionLabel.setFont(new Font("Arial", Font.BOLD, 24)); // Zwiększenie czcionki etykiety
+        questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        questionLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        questionPanel.add(questionLabel);
 
         // Panel na przyciski odpowiedzi
         JPanel buttonsPanel = new JPanel();
-        buttonsPanel.setLayout(new GridLayout(4, 1, 10, 10)); // GridLayout z marginesami
-        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT); // Wyśrodkowanie panelu przycisków w osi X
+        buttonsPanel.setLayout(new GridLayout(4, 1, 10, 10));
+        buttonsPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
 
         JSONArray answers = question.getJSONArray("odpowiedzi");
 
         for (int i = 0; i < answers.length(); i++) {
-            String answerText = answers.getString(i);
+            JSONObject answerObj = answers.getJSONObject(i);
+            String answerText = answerObj.getString("answerText");
+            int answerID = answerObj.getInt("answerID");
+
             JButton answerButton = new JButton(answerText);
-            answerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, answerButton.getMinimumSize().height)); // Maksymalna szerokość, minimalna wysokość
-            answerButton.addActionListener(e -> handleAnswer(answerButton, answerText));
-            buttonsPanel.add(answerButton); // Dodanie do panelu przycisków
+            answerButton.setActionCommand(String.valueOf(answerID)); // Przypisanie answerID jako action command
+            answerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, answerButton.getMinimumSize().height));
+            answerButton.addActionListener(e -> handleAnswer(answerButton, answerText, Integer.parseInt(answerButton.getActionCommand())));
+            buttonsPanel.add(answerButton);
         }
 
-        // Dodanie komponentów do panelu pytania
-        questionPanel.add(Box.createVerticalGlue()); // Dodanie pustego miejsca na górze
-        questionPanel.add(questionLabel);
-        questionPanel.add(Box.createRigidArea(new Dimension(0, 20))); // Dodanie przestrzeni między pytaniem a przyciskami
         questionPanel.add(buttonsPanel);
-        questionPanel.add(Box.createVerticalGlue()); // Dodanie pustego miejsca na dole
-
         return questionPanel;
     }
 
-    private void handleAnswer(JButton answerButton, String chosenAnswer) {
+    private void handleAnswer(JButton answerButton, String chosenAnswer, int answerID) {
+        // Ta metoda teraz otrzymuje również answerID
         if (selectedAnswerButton != null) {
-            // Opcjonalnie resetuj kolor poprzednio wybranego przycisku, jeśli chcesz zezwolić na zmianę wyboru przed kliknięciem "Dalej"
             selectedAnswerButton.setBackground(UIManager.getColor("Button.background"));
             selectedAnswerButton.setOpaque(false);
             selectedAnswerButton.setBorderPainted(true);
         }
 
-        selectedAnswerButton = answerButton; // Zapisz referencję do wybranego przycisku
+        selectedAnswerButton = answerButton;
+        // Tutaj możesz teraz użyć answerID dla dalszej logiki, np. wysyłania odpowiedzi do serwera
     }
 
-    private void sendAnswerToServer(String chosenAnswer) {
+    private void sendAnswerToServer(int answerID) {
         try {
             JSONObject answerJson = new JSONObject();
             answerJson.put("action","answering");
             answerJson.put("kod pokoju", roomCode);
             answerJson.put("nickname", playerName);
             answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
-            answerJson.put("odpowiedz", chosenAnswer);
+            answerJson.put("answerID", answerID);
 
-            String ans = answerJson.toString();
-            int messageLength = ans.getBytes().length;
+            String jsonStr = answerJson.toString();
+            int messageLength = jsonStr.getBytes().length;
             ByteBuffer buffer = ByteBuffer.allocate(4);
             buffer.putInt(messageLength);
             byte[] lengthBytes = buffer.array();
@@ -182,7 +185,7 @@ public class GameSession {
             // Wysyłanie długości wiadomości
             networkConnection.send(lengthBytes);
             // Wysyłanie samej wiadomości
-            networkConnection.send(ans.getBytes());
+            networkConnection.send(jsonStr.getBytes());
         } catch (JSONException e) {
             e.printStackTrace();
         }

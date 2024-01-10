@@ -60,9 +60,15 @@ public class QuizClient {
         actionButton.addActionListener(e -> {
             JSONObject questionJson = new JSONObject();
             JSONArray answersJson = new JSONArray();
-            for (JTextField answerField : answerFields) {
-                answersJson.put(answerField.getText());
+            for (int i = 0; i < answerFields.length; i++) {
+                JSONObject answerJson = new JSONObject();
+                answerJson.put("answerText", answerFields[i].getText());
+                answerJson.put("answerID", i); // Dodanie identyfikatora odpowiedzi
+                answersJson.put(answerJson);
             }
+//            for (JTextField answerField : answerFields) {
+//                answersJson.put(answerField.getText());
+//            }
             questionJson.put("pytanie", questionField.getText());
             questionJson.put("odpowiedzi", answersJson);
             questionsAndAnswersList.add(questionJson);
