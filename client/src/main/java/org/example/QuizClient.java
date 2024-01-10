@@ -129,9 +129,10 @@ public class QuizClient {
             public void actionPerformed(ActionEvent e) {
                 JSONObject json = new JSONObject();
                 json.put("status", "beginGame");
+                json.put("action", "controls");
 
-                // Wyślij JSON jako string do serwera
                 networkConnection.send(json.toString());
+                new HostGameView(frame, roomCode, networkConnection);
             }
         });
         mainPanel.add(startGameButton, BorderLayout.SOUTH);

@@ -36,7 +36,7 @@ public class NetworkConnection {
             byte[] length = ByteBuffer.allocate(4).putInt(dataBytes.length).array();
 
             out.write(length); // Najpierw wysyła długość wiadomości
-            out.write(dataBytes); // Następnie wysyła samą wiadomość
+            out.write(dataBytes); // Następnie wysyła samą wiadomośćą
             out.flush();
         } catch (Exception e) {
             e.printStackTrace();
@@ -54,20 +54,30 @@ public class NetworkConnection {
 
     public String receiveCompleteJson() throws IOException {
         while (true) {
-            byte[] buffer = new byte[1024]; // Bufor do odbierania danych
-            int bytesRead = in.read(buffer);
-            if (bytesRead == -1) {
-                throw new IOException("End of stream reached");
-            }
-            partialData.append(new String(buffer, 0, bytesRead));
+            if (in.available() > 0) {
+                byte[] buffer = new byte[1024]; // Bufor do odbierania danych
+                int bytesRead = in.read(buffer);
+                if (bytesRead == -1) {
+                    throw new IOException("End of stream reached");
+                }
+                partialData.append(new String(buffer, 0, bytesRead));
 
-            if (isCompleteJson(partialData.toString())) {
-                String completeJson = partialData.toString();
-                partialData.setLength(0); // Reset bufora
-                return completeJson;
+                if (isCompleteJson(partialData.toString())) {
+                    String completeJson = partialData.toString();
+                    partialData.setLength(0); // Reset bufora
+                    return completeJson;
+                }
+            } else {
+                try {
+                    Thread.sleep(100); // Opóźnienie o 100 ms
+                } catch (InterruptedException e) {
+                    Thread.currentThread().interrupt();
+                    throw new IOException("Thread interrupted", e);
+                }
             }
         }
     }
+
 
     private boolean isCompleteJson(String jsonStr) {
         try {
