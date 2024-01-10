@@ -127,7 +127,11 @@ public class QuizClient {
         startGameButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                // Obsłuż rozpoczęcie gry
+                JSONObject json = new JSONObject();
+                json.put("status", "beginGame");
+
+                // Wyślij JSON jako string do serwera
+                networkConnection.send(json.toString());
             }
         });
         mainPanel.add(startGameButton, BorderLayout.SOUTH);

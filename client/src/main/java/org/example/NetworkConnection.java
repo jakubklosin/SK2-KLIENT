@@ -6,6 +6,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.net.Socket;
+import java.nio.ByteBuffer;
 
 public class NetworkConnection {
     private Socket socket;
@@ -31,7 +32,12 @@ public class NetworkConnection {
 
     public void send(String data) {
         try {
-            send(data.getBytes());
+            byte[] dataBytes = data.getBytes();
+            byte[] length = ByteBuffer.allocate(4).putInt(dataBytes.length).array();
+
+            out.write(length); // Najpierw wysyła długość wiadomości
+            out.write(dataBytes); // Następnie wysyła samą wiadomość
+            out.flush();
         } catch (Exception e) {
             e.printStackTrace();
         }
