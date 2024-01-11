@@ -1,32 +1,34 @@
 package org.example;
-
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.ArrayList;
+import java.nio.ByteBuffer;
+import java.util.*;
 import java.util.List;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
-import java.util.Random;
-import java.nio.ByteBuffer;
-
 
 public class QuizClient {
     private String roomCode;
     private List<JSONObject> questionsAndAnswersList;
+    private List<String> questions;
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JFrame frame;
+    private HostGameView hostGameView;
     private NetworkConnection networkConnection;
 
     public QuizClient(JFrame frame) {
         this.frame = frame;
         this.questionsAndAnswersList = new ArrayList<>();
+        this.questions = new ArrayList<>(); // Inicjalizacja listy pytań
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
         this.networkConnection = new NetworkConnection();
         initializeQuiz(frame);
+        listenForPlayerScores();
     }
 
     void initializeQuiz(JFrame frame) {
@@ -38,6 +40,7 @@ public class QuizClient {
     }
 
     private JPanel createQuestionPanel(int questionIndex) {
+
         JPanel questionPanel = new JPanel(new GridLayout(0, 1));
         questionPanel.setBackground(new Color(98, 180, 228));
         JTextField questionField = new JTextField();
@@ -69,6 +72,7 @@ public class QuizClient {
         actionButton.addActionListener(e -> {
             JSONObject questionJson = new JSONObject();
             JSONArray answersJson = new JSONArray();
+            questions.add(questionField.getText());
             for (int i = 0; i < answerFields.length; i++) {
                 JSONObject answerJson = new JSONObject();
                 answerJson.put("answerText", answerFields[i].getText());
@@ -125,6 +129,56 @@ public class QuizClient {
         return String.format("%03d", new Random().nextInt(1000));
     }
 
+    private void updateHostGameView(Map<String, Integer> userScores) {
+        if (hostGameView != null) {
+            SwingUtilities.invokeLater(() -> {
+                hostGameView.updateScores(userScores);
+            });
+        }
+    }
+
+    private void listenForPlayerScores() {
+        new Thread(() -> {
+            while(true) {
+                try {
+                    // Odbieranie długości odpowiedzi
+                    byte[] lengthBytes = networkConnection.receiveBytes(4);
+                    ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
+                    int length = wrapped.getInt();
+
+                    // Odbieranie i przetwarzanie kompletnego JSON-a
+                    String jsonStr = networkConnection.receiveCompleteJson();
+                    JSONObject jsonObject = new JSONObject(jsonStr);
+
+                    if (jsonObject.has("users")) {
+                        JSONArray usersArray = jsonObject.getJSONArray("users");
+                        System.out.println(usersArray);
+                        Map<String, Integer> userScores = new HashMap<>();
+                        for (int i = 0; i < usersArray.length(); i++) {
+                            JSONObject userObject = usersArray.getJSONObject(i);
+                            String userName = userObject.getString("user");
+                            int score = userObject.getInt("score");
+                            userScores.put(userName, score);
+                        }
+
+                        // Aktualizacja HostGameView
+                        if (hostGameView != null) {
+                            hostGameView.updateHostGameView(userScores);
+                        }
+                    } else if (jsonObject.has("status")) {
+                        System.out.println("Pokoj utworzony poprawnie");
+                    } else {
+                        System.out.println("Nieznany klucz w JSONie");
+                    }
+
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }).start();
+    }
+
+
     private void showRoomCodeView() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
@@ -159,7 +213,7 @@ public class QuizClient {
                 json.put("action", "controls");
 
                 networkConnection.send(json.toString());
-                new HostGameView(frame, roomCode, networkConnection);
+                hostGameView = new HostGameView(frame, roomCode, networkConnection, questions);
             }
         });
 
