@@ -44,6 +44,7 @@ public class HostGameView {
         JPanel topPanel = new JPanel();
         topPanel.setLayout(new BoxLayout(topPanel, BoxLayout.Y_AXIS));
         topPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        topPanel.setBackground(new Color(98, 180, 228));
 
         JLabel roomCodeLabel = new JLabel("Numer pokoju: " + roomCode);
         roomCodeLabel.setFont(new Font("Arial", Font.BOLD, 24));
@@ -65,12 +66,14 @@ public class HostGameView {
         JPanel scorePanel = new JPanel();
         scorePanel.setLayout(new BoxLayout(scorePanel, BoxLayout.Y_AXIS));
         scorePanel.setAlignmentX(Component.LEFT_ALIGNMENT); // Wyrównanie do lewej
+        scorePanel.setBackground(new Color(98, 180, 228));
 
         // Tworzenie pasków postępu dla graczy
         for (Map.Entry<String, Integer> entry : playerScores.entrySet()) {
             JPanel playerPanel = new JPanel();
             playerPanel.setLayout(new BoxLayout(playerPanel, BoxLayout.X_AXIS));
             playerPanel.setAlignmentX(Component.LEFT_ALIGNMENT);
+            playerPanel.setBackground(new Color(98, 180, 228));
 
             JLabel nameLabel = new JLabel(entry.getKey() + ": ");
             nameLabel.setFont(new Font("Arial", Font.BOLD, 16));

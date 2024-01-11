@@ -31,9 +31,11 @@ public class JoinGame {
         JPanel contentPanel = new JPanel();
         contentPanel.setLayout(new BoxLayout(contentPanel, BoxLayout.Y_AXIS));
         contentPanel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
+        contentPanel.setBackground(new Color(98, 180, 228));
 
         // Etykieta i pole tekstowe dla numeru pokoju
         JLabel roomNumberLabel = new JLabel("Wprowadź numer pokoju", SwingConstants.CENTER);
+        roomNumberLabel.setFont(new Font("Arial", Font.BOLD, 20));
         roomNumberLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         contentPanel.add(roomNumberLabel);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -41,11 +43,13 @@ public class JoinGame {
         roomNumberField.setMaximumSize(roomNumberField.getPreferredSize());
         roomNumberField.setHorizontalAlignment(JTextField.CENTER);
         roomNumberField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        roomNumberField.setBackground(new Color(180, 235, 255));
         contentPanel.add(roomNumberField);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Etykieta i pole tekstowe dla nazwy gracza
         JLabel playerNameLabel = new JLabel("Nazwa gracza", SwingConstants.CENTER);
+        playerNameLabel.setFont(new Font("Arial", Font.BOLD, 20));
         playerNameLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         contentPanel.add(playerNameLabel);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 5)));
@@ -53,12 +57,29 @@ public class JoinGame {
         playerNameField.setMaximumSize(playerNameField.getPreferredSize());
         playerNameField.setHorizontalAlignment(JTextField.CENTER);
         playerNameField.setAlignmentX(Component.CENTER_ALIGNMENT);
+        playerNameField.setBackground(new Color(180, 235, 255));
         contentPanel.add(playerNameField);
         contentPanel.add(Box.createRigidArea(new Dimension(0, 10)));
 
         // Przycisk dołączania
         joinButton = new JButton("Dołącz");
         joinButton.setAlignmentX(Component.CENTER_ALIGNMENT);
+        joinButton.setMaximumSize(new Dimension(200, 50));
+        joinButton.setFont(new Font("Arial", Font.BOLD, 20));
+        joinButton.setBackground(new Color(180, 235, 255));
+        joinButton.setOpaque(true);
+        joinButton.setBorderPainted(false);
+        joinButton.setFocusPainted(false);
+        joinButton.addMouseListener(new java.awt.event.MouseAdapter() {
+            public void mouseEntered(java.awt.event.MouseEvent evt) {
+                joinButton.setBackground(new Color(100, 200, 255)); // Ciemniejszy kolor przy najechaniu
+            }
+
+            public void mouseExited(java.awt.event.MouseEvent evt) {
+                joinButton.setBackground(new Color(180, 235, 255)); // Powrót do oryginalnego koloru
+            }
+        });
+
         joinButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {

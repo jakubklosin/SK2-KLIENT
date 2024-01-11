@@ -28,6 +28,7 @@ public class GameSession {
         this.questionsList = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
+        this.mainPanel.setBackground(new Color(98, 180, 228));
         frame.add(mainPanel);
     }
 
@@ -45,18 +46,24 @@ public class GameSession {
     private void displayQuestion() {
         // Usunięcie wszystkich poprzednich komponentów
         frame.getContentPane().removeAll();
+        frame.getContentPane().setBackground(new Color(98, 180, 228)); // Ustawienie koloru tła dla całego okna
         frame.setLayout(new BorderLayout()); // Ustawienie BorderLayout dla ramki
 
         if (currentQuestionIndex < questionsList.size()) {
             // Pobranie bieżącego pytania na podstawie indeksu
             JSONObject question = questionsList.get(currentQuestionIndex);
             JPanel questionPanel = createQuestionPanel(question);
+            questionPanel.setBackground(new Color(98, 180, 228)); // Ustawienie koloru tła dla panelu pytania
 
             // Dodanie panelu pytania do głównego kontenera
             frame.getContentPane().add(questionPanel, BorderLayout.CENTER);
 
             // Dodanie przycisku "Dalej"
             JButton nextButton = new JButton("Dalej");
+            // Ustawienie koloru tła dla przycisku, jeśli potrzebujesz
+            nextButton.setBackground(new Color(180, 235, 255));
+            nextButton.setOpaque(true);
+            nextButton.setBorderPainted(false);
             nextButton.addActionListener(e -> {
                 if (selectedAnswerButton != null) {
                     // Podświetlenie wybranej odpowiedzi na zielono
@@ -91,6 +98,7 @@ public class GameSession {
 
             // Panel na przycisk "Dalej"
             JPanel buttonPanel = new JPanel(new FlowLayout(FlowLayout.CENTER));
+            buttonPanel.setBackground(new Color(98, 180, 228)); // Ustawienie koloru tła dla panelu z przyciskiem
             buttonPanel.add(nextButton);
             frame.getContentPane().add(buttonPanel, BorderLayout.PAGE_END);
         } else {
@@ -104,32 +112,34 @@ public class GameSession {
 
 
     private void displayEndOfQuiz() {
-        frame.getContentPane().removeAll();
+        // Usunięcie wszystkich poprzednich komponentów
+        mainPanel.removeAll(); // Zamiast frame.getContentPane().removeAll();
+        mainPanel.setLayout(new GridBagLayout()); // Zmiana layoutu dla mainPanel
 
         JLabel endLabel = new JLabel("Koniec quizu");
         endLabel.setFont(new Font("Arial", Font.BOLD, 30)); // Zwiększenie czcionki
         endLabel.setHorizontalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w poziomie
         endLabel.setVerticalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w pionie
 
-        JPanel endPanel = new JPanel();
-        endPanel.setLayout(new GridBagLayout()); // Używamy GridBagLayout dla wyśrodkowania komponentu
-        endPanel.add(endLabel);
-        frame.getContentPane().add(endPanel, BorderLayout.CENTER);
+        mainPanel.add(endLabel); // Dodanie endLabel do mainPanel
 
-        frame.revalidate();
-        frame.repaint();
+        mainPanel.revalidate();
+        mainPanel.repaint();
     }
+
 
 
     private JPanel createQuestionPanel(JSONObject question) {
         JPanel questionPanel = new JPanel();
         questionPanel.setLayout(new BoxLayout(questionPanel, BoxLayout.Y_AXIS));
         questionPanel.setAlignmentX(Component.CENTER_ALIGNMENT);
+        questionPanel.setBackground(new Color(98, 180, 228));
 
         // Etykieta pytania
         JLabel questionLabel = new JLabel(question.getString("pytanie"));
         questionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         questionLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        questionLabel.setBackground(new Color(98, 180, 228));
         questionPanel.add(questionLabel);
 
         // Panel na przyciski odpowiedzi
@@ -148,6 +158,7 @@ public class GameSession {
             answerButton.setActionCommand(String.valueOf(answerID)); // Przypisanie answerID jako action command
             answerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, answerButton.getMinimumSize().height));
             answerButton.addActionListener(e -> handleAnswer(answerButton, answerText, Integer.parseInt(answerButton.getActionCommand())));
+            answerButton.setBackground(new Color(180, 235, 255));
             buttonsPanel.add(answerButton);
         }
 
