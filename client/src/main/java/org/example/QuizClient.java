@@ -1,4 +1,5 @@
 package org.example;
+
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -6,7 +7,6 @@ import java.awt.event.ActionListener;
 import java.nio.ByteBuffer;
 import java.util.*;
 import java.util.List;
-
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -17,19 +17,27 @@ public class QuizClient {
     private JPanel mainPanel;
     private CardLayout cardLayout;
     private JFrame frame;
+    private JList<String> userList;
+    private DefaultListModel<String> userModel;
     private HostGameView hostGameView;
     private NetworkConnection networkConnection;
+    private DataListener dataListener; // Dodano DataListener
 
     public QuizClient(JFrame frame) {
         this.frame = frame;
         this.questionsAndAnswersList = new ArrayList<>();
-        this.questions = new ArrayList<>(); // Inicjalizacja listy pytań
+        this.questions = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
         this.networkConnection = new NetworkConnection();
+        this.userModel = new DefaultListModel<>();
+        this.userList = new JList<>(userModel);
+        this.dataListener = new DataListener(networkConnection); // Upewnij się, że to jest przed użyciem dataListener
+        this.dataListener.setOnUserJoin(this::updateUserList); // Ustawienie metody callback
+        this.dataListener.setOnScoreUpdate(this::updateHostGameView); // Ustawienie metody callback
         initializeQuiz(frame);
-        listenForPlayerScores();
     }
+
 
     void initializeQuiz(JFrame frame) {
         for (int i = 0; i < 5; i++) {
@@ -95,6 +103,23 @@ public class QuizClient {
         return questionPanel;
     }
 
+    private void updateUserList(List<String> users) {
+        SwingUtilities.invokeLater(() -> {
+            if (userModel != null) {
+                users.forEach(user -> {
+                    if (!isUserInModel(user)) {
+                        userModel.addElement(user);
+                    }
+                });
+            }
+        });
+    }
+
+    private boolean isUserInModel(String user) {
+        return userModel.contains(user);
+    }
+
+
 
     private void sendToServer() {
         try {
@@ -137,48 +162,6 @@ public class QuizClient {
         }
     }
 
-    private void listenForPlayerScores() {
-        new Thread(() -> {
-            while(true) {
-                try {
-                    // Odbieranie długości odpowiedzi
-                    byte[] lengthBytes = networkConnection.receiveBytes(4);
-                    ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
-                    int length = wrapped.getInt();
-
-                    // Odbieranie i przetwarzanie kompletnego JSON-a
-                    String jsonStr = networkConnection.receiveCompleteJson();
-                    JSONObject jsonObject = new JSONObject(jsonStr);
-
-                    if (jsonObject.has("users")) {
-                        JSONArray usersArray = jsonObject.getJSONArray("users");
-                        System.out.println(usersArray);
-                        Map<String, Integer> userScores = new HashMap<>();
-                        for (int i = 0; i < usersArray.length(); i++) {
-                            JSONObject userObject = usersArray.getJSONObject(i);
-                            String userName = userObject.getString("user");
-                            int score = userObject.getInt("score");
-                            userScores.put(userName, score);
-                        }
-
-                        // Aktualizacja HostGameView
-                        if (hostGameView != null) {
-                            hostGameView.updateHostGameView(userScores);
-                        }
-                    } else if (jsonObject.has("status")) {
-                        System.out.println("Pokoj utworzony poprawnie");
-                    } else {
-                        System.out.println("Nieznany klucz w JSONie");
-                    }
-
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
-    }
-
-
     private void showRoomCodeView() {
         mainPanel.removeAll();
         mainPanel.setLayout(new BorderLayout());
@@ -187,6 +170,10 @@ public class QuizClient {
         JLabel codeLabel = new JLabel("Kod twojego pokoju: " + roomCode, SwingConstants.CENTER);
         codeLabel.setFont(new Font("Arial", Font.BOLD, 20));
         mainPanel.add(codeLabel, BorderLayout.CENTER);
+
+        JScrollPane userScrollPane = new JScrollPane(userList);
+        userScrollPane.setPreferredSize(new Dimension(200, 100)); // Dostosuj rozmiar według potrzeb
+        mainPanel.add(userScrollPane, BorderLayout.EAST);
 
         JButton startGameButton = new JButton("Rozpocznij grę");
         startGameButton.setFont(new Font("Arial", Font.BOLD, 20));
@@ -213,7 +200,7 @@ public class QuizClient {
                 json.put("action", "controls");
 
                 networkConnection.send(json.toString());
-                hostGameView = new HostGameView(frame, roomCode, networkConnection, questions);
+                hostGameView = new HostGameView(frame, roomCode, networkConnection, questions, dataListener);
             }
         });
 

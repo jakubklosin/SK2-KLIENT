@@ -1,11 +1,7 @@
 package org.example;
 
-import org.json.JSONArray;
-import org.json.JSONObject;
-
 import javax.swing.*;
 import java.awt.*;
-import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -19,10 +15,10 @@ public class HostGameView {
     private Map<String, Integer> playerScores;
     private Map<String, JProgressBar> playerProgressBars;
     private NetworkConnection networkConnection;
-    private JLabel currentQuestionLabel; // Etykieta dla aktualnego pytania
-    private JPanel scorePanel; // Panel dla scoreboardu
+    private JLabel currentQuestionLabel;
+    private JPanel scorePanel;
 
-    public HostGameView(JFrame frame, String roomCode, NetworkConnection networkConnection, List<String> questions) {
+    public HostGameView(JFrame frame, String roomCode, NetworkConnection networkConnection, List<String> questions, DataListener dataListener) {
         this.frame = frame;
         this.roomCode = roomCode;
         this.questions = questions;
@@ -31,7 +27,10 @@ public class HostGameView {
         this.playerScores = new HashMap<>();
         this.playerProgressBars = new HashMap<>();
         this.networkConnection = networkConnection;
-        listenForScoreUpdates();
+
+        // Ustawienie metody callback w DataListener
+        dataListener.setOnScoreUpdate(this::updateScores);
+
         initializeHostGameView();
     }
 
@@ -113,42 +112,6 @@ public class HostGameView {
     private void refreshScoreboard() {
         scorePanel.revalidate();
         scorePanel.repaint();
-    }
-
-    public void updateHostGameView(Map<String, Integer> userScores) {
-        updateScores(userScores);
-    }
-
-    private void listenForScoreUpdates() {
-        new Thread(() -> {
-            while(true) {
-                try {
-                    byte[] lengthBytes = networkConnection.receiveBytes(4);
-                    ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
-                    int length = wrapped.getInt();
-
-                    String scoreUpdateJson = networkConnection.receiveCompleteJson();
-                    JSONObject jsonObject = new JSONObject(scoreUpdateJson);
-
-                    if (jsonObject.has("data")) {
-                        JSONArray usersArray = jsonObject.getJSONArray("users");
-                        System.out.println(usersArray);
-                        Map<String, Integer> userScores = new HashMap<>();
-                        for (int i = 0; i < usersArray.length(); i++) {
-                            JSONObject userObject = usersArray.getJSONObject(i);
-                            String userName = userObject.getString("user");
-                            int score = userObject.getInt("score");
-                            userScores.put(userName, score);
-                        }
-
-                        updateScores(userScores);
-                    }
-                    // Możesz dodać tutaj obsługę innych przypadków, jeśli to konieczne
-                } catch (Exception e) {
-                    e.printStackTrace();
-                }
-            }
-        }).start();
     }
 
 }
