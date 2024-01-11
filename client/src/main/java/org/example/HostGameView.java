@@ -1,10 +1,12 @@
 package org.example;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -122,21 +124,43 @@ public class HostGameView {
     }
 
     // Metoda do nasłuchiwania na aktualizacje punktacji
-    //Przepraszam za aktywne czekanie :((( chociaz z thread.sleep() :)
+//    private void listenForScoreUpdates() {
+//        new Thread(() -> {
+//            while (true) { // Używamy nieskończonej pętli do ciągłego nasłuchiwania
+//                try {
+//                    // Odbieranie JSON-a i wypisywanie go na konsolę
+//                    String scoreUpdateJsonStr = networkConnection.receiveCompleteJson();
+//                    System.out.println("Received JSON: " + scoreUpdateJsonStr);
+//                } catch (IOException e) {
+//                    e.printStackTrace();
+//                    break; // W przypadku błędu zakończ wątek
+//                }
+//            }
+//        }).start();
+//    }
+
     private void listenForScoreUpdates() {
         new Thread(() -> {
-            while (true) { // Używamy nieskończonej pętli do ciągłego nasłuchiwania
+            while(true) {
                 try {
-                    String scoreUpdateJsonStr = networkConnection.receiveCompleteJson();
-                    JSONObject scoreUpdate = new JSONObject(scoreUpdateJsonStr);
-                    updateScores(scoreUpdate);
-                } catch (IOException e) {
+                    // Odbieranie długości odpowiedzi
+                    byte[] lengthBytes = networkConnection.receiveBytes(4);
+                    ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
+                    int length = wrapped.getInt();
+
+                    // Odbieranie i przetwarzanie kompletnego JSON-a
+                    String score = networkConnection.receiveCompleteJson();
+                    System.out.println("Received JSON: " + score);
+
+                } catch (Exception e) {
                     e.printStackTrace();
-                    break; // W przypadku błędu zakończ wątek
                 }
             }
+
         }).start();
     }
+
+
 
     // Metoda do aktualizacji punktacji w interfejsie użytkownika
     private void updateScores(JSONObject scoreUpdate) {
@@ -153,6 +177,4 @@ public class HostGameView {
     private void refreshScoreboard() {
         // Tu zaimplementuj logikę do odświeżania panelu z punktami
     }
-
-
 }

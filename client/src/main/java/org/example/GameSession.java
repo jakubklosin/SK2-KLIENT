@@ -60,12 +60,17 @@ public class GameSession {
             nextButton.addActionListener(e -> {
                 if (selectedAnswerButton != null) {
                     // Podświetlenie wybranej odpowiedzi na zielono
-                    selectedAnswerButton.setBackground(Color.decode("#98FF98"));
-                    selectedAnswerButton.setOpaque(true);
-                    selectedAnswerButton.setBorderPainted(false);
 
                     int answerID = Integer.parseInt(selectedAnswerButton.getActionCommand());
                     sendAnswerToServer(answerID);
+                    if(answerID == 0){
+                        selectedAnswerButton.setBackground(Color.decode("#98FF98"));
+                    }else {
+                        selectedAnswerButton.setBackground(Color.decode("#D24545"));
+                    }
+                    selectedAnswerButton.setOpaque(true);
+                    selectedAnswerButton.setBorderPainted(false);
+
 
                     // Opóźnienie przejścia do następnego pytania
                     Timer timer = new Timer(500, event -> {
