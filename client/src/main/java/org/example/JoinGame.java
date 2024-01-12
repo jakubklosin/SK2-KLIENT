@@ -164,7 +164,9 @@ public class JoinGame {
                 JSONArray questions = response.getJSONArray("pytania");
 
                 // Rozpoczęcie nowej sesji quizu z pytaniami
-                GameSession gameSession = new GameSession(frame, roomCode, playerName, networkConnection);
+                DataListener dataListener = new DataListener(networkConnection);
+                // Teraz przekazujemy dataListener jako argument do konstruktora GameSession
+                GameSession gameSession = new GameSession(frame, roomCode, playerName, networkConnection, dataListener);
                 gameSession.setQuestionsList(questions);
             } else {
                 JOptionPane.showMessageDialog(frame, "Błąd: " + response.toString());

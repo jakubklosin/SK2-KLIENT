@@ -15,12 +15,17 @@ public class DataListener {
     private boolean isRunning;
     private Consumer<Map<String, Integer>> onScoreUpdate;
     private Consumer<List<String>> onUserJoin;
+    private Consumer<String> onStatusUpdate;
 
     public DataListener(NetworkConnection networkConnection) {
         this.networkConnection = networkConnection;
         this.isRunning = true;
-        this.listeningThread = new Thread(this::run);
+       this.listeningThread = new Thread(this::run);
         this.listeningThread.start();
+    }
+
+    public void setOnStatusUpdate(Consumer<String> onStatusUpdate) {
+        this.onStatusUpdate = onStatusUpdate;
     }
 
     public void setOnUserJoin(Consumer<List<String>> onUserJoin) {
@@ -36,6 +41,7 @@ public class DataListener {
 
                 String jsonStr = networkConnection.receiveCompleteJson();
                 JSONObject jsonObject = new JSONObject(jsonStr);
+                System.out.println(jsonObject);
 
                 if (jsonObject.has("usersJoined")) {
                     JSONArray usersArray = jsonObject.getJSONArray("usersJoined");
@@ -46,6 +52,14 @@ public class DataListener {
                     }
                     if (onUserJoin != null) {
                         onUserJoin.accept(userNames);
+                    }
+                }
+
+                if (jsonObject.has("status")) {
+                    String status = jsonObject.getString("status");
+                    System.out.println(status);
+                    if (onStatusUpdate != null) {
+                        onStatusUpdate.accept(status);
                     }
                 }
 
@@ -63,7 +77,7 @@ public class DataListener {
                         onScoreUpdate.accept(userScores);
                     }
                 }
-                // Dodaj obsługę innych przypadków, jeśli jest to potrzebne
+
             } catch (Exception e) {
                 e.printStackTrace();
             }

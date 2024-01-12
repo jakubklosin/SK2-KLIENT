@@ -16,15 +16,14 @@ public class GameSession {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private JButton selectedAnswerButton = null; //Aktualnie wybrana odpowiedz
-    private String roomCode; // Kod pokoju
-    private String playerName; // Nazwa gracza
+    private String playerName;
     private int currentQuestionIndex = 0;
     private NetworkConnection networkConnection;
-    public GameSession(JFrame frame, String roomCode, String playerName, NetworkConnection networkConnection) {
+    public GameSession(JFrame frame, String roomCode, String playerName, NetworkConnection networkConnection, DataListener dataListener) {
         this.frame = frame;
-        this.roomCode = roomCode;
         this.playerName = playerName;
         this.networkConnection = networkConnection;
+        dataListener.setOnStatusUpdate(this::handleStatusUpdate);
         this.questionsList = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
@@ -36,10 +35,28 @@ public class GameSession {
         for (int i = 0; i < questions.length(); i++) {
             questionsList.add(questions.getJSONObject(i));
         }
-        // Wyświetlenie pytań na całym oknie po ich ustawieniu
-        //SwingUtilities.invokeLater(this::displayQuestions);
-        currentQuestionIndex = 0; //Reset biezacego indeksu pytania przy ustawianiu nowej listy pytań
+
+        currentQuestionIndex = 0;
         displayQuestion();
+    }
+
+    private void handleStatusUpdate(String status) {
+        SwingUtilities.invokeLater(() -> {
+            switch (status) {
+                case "nextRound":
+                    moveToNextQuestion();
+                    break;
+                case "nextRound5":
+                    showTimeWarningAndMoveToNextQuestion();
+                    break;
+                case "end":
+                    displayEndOfQuiz();
+                    break;
+                case "start":
+                    displayQuestion();
+                    break;
+                default: System.out.println(status);}
+        });
     }
 
     private void displayQuestion() {
@@ -107,6 +124,30 @@ public class GameSession {
         frame.repaint();
     }
 
+    private void moveToNextQuestion() {
+        currentQuestionIndex++;
+        if (currentQuestionIndex < questionsList.size()) {
+            displayQuestion(); // Wyświetlenie następnego pytania
+        } else {
+            displayEndOfQuiz(); // Wyświetlenie końca quizu
+        }
+    }
+
+    // Metoda do wyświetlenia ostrzeżenia o czasie i przejścia do następnego pytania
+    private void showTimeWarningAndMoveToNextQuestion() {
+        JLabel timeWarningLabel = new JLabel("5 sekund");
+        timeWarningLabel.setFont(new Font("Arial", Font.BOLD, 48));
+        timeWarningLabel.setHorizontalAlignment(JLabel.CENTER);
+        frame.getContentPane().add(timeWarningLabel, BorderLayout.NORTH);
+
+        Timer timer = new Timer(5000, e -> moveToNextQuestion());
+        timer.setRepeats(false);
+        timer.start();
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
 
     private void displayEndOfQuiz() {
         frame.getContentPane().removeAll();
@@ -161,7 +202,6 @@ public class GameSession {
     }
 
     private void handleAnswer(JButton answerButton, String chosenAnswer, int answerID) {
-        // Ta metoda teraz otrzymuje również answerID
         if (selectedAnswerButton != null) {
             selectedAnswerButton.setBackground(UIManager.getColor("Button.background"));
             selectedAnswerButton.setOpaque(false);
@@ -169,16 +209,14 @@ public class GameSession {
         }
 
         selectedAnswerButton = answerButton;
-        // Tutaj możesz teraz użyć answerID dla dalszej logiki, np. wysyłania odpowiedzi do serwera
     }
 
     private void sendAnswerToServer(int answerID) {
         try {
             JSONObject answerJson = new JSONObject();
             answerJson.put("action","answering");
-            ///answerJson.put("kod pokoju", roomCode);
             answerJson.put("nickname", playerName);
-            answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
+            answerJson.put("numer pytania", currentQuestionIndex + 1);
             answerJson.put("answerID", answerID);
 
             String jsonStr = answerJson.toString();
@@ -196,6 +234,4 @@ public class GameSession {
         }
     }
 
-    // Metody do przełączania pytań, obsługi odpowiedzi itd.
-    // ...
 }

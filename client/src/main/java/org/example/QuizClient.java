@@ -32,9 +32,9 @@ public class QuizClient {
         this.networkConnection = new NetworkConnection();
         this.userModel = new DefaultListModel<>();
         this.userList = new JList<>(userModel);
-        this.dataListener = new DataListener(networkConnection); // Upewnij się, że to jest przed użyciem dataListener
-        this.dataListener.setOnUserJoin(this::updateUserList); // Ustawienie metody callback
-        this.dataListener.setOnScoreUpdate(this::updateHostGameView); // Ustawienie metody callback
+        this.dataListener = new DataListener(networkConnection);
+        this.dataListener.setOnUserJoin(this::updateUserList);
+        this.dataListener.setOnScoreUpdate(this::updateHostGameView);
         initializeQuiz(frame);
     }
 
