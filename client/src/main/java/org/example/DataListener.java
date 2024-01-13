@@ -85,6 +85,13 @@ public class DataListener {
 
     public void stopListening() {
         isRunning = false;
-        listeningThread.interrupt();
+        if (listeningThread != null) {
+            try {
+                listeningThread.interrupt(); // Przerwanie wątku
+                listeningThread.join(); // Oczekiwanie na zakończenie wątku
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
     }
 }

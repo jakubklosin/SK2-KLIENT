@@ -161,6 +161,7 @@ public class GameSession {
     private void handleHostDisconnect(String status) {
         if (status.equals("disconnected")) {
             displayDisconnectScreen();
+            dataListener.stopListening();
         }
     }
 
