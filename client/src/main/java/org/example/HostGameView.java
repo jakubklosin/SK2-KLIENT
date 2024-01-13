@@ -49,8 +49,8 @@ public class HostGameView {
         topPanel.add(roomCodeLabel);
         topPanel.add(Box.createRigidArea(new Dimension(0, 30)));
 
-        currentQuestionLabel = new JLabel("Pytanie");
-        currentQuestionLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        currentQuestionLabel = new JLabel("Użytkownicy odpowiadają na pytania");
+        currentQuestionLabel.setFont(new Font("Arial", Font.BOLD, 24));
         currentQuestionLabel.setAlignmentX(Component.CENTER_ALIGNMENT);
         topPanel.add(currentQuestionLabel);
         frame.add(topPanel, BorderLayout.NORTH);
@@ -64,16 +64,8 @@ public class HostGameView {
         frame.revalidate();
         frame.repaint();
 
-        updateCurrentQuestion(); // Tym razem wywołujemy po inicjalizacji UI
     }
 
-    private void updateCurrentQuestion() {
-        if (currentQuestionIndex < questions.size()) {
-            currentQuestionText = questions.get(currentQuestionIndex);
-            currentQuestionLabel.setText("<html><div style='text-align: center;'>" + currentQuestionText + "</div></html>");
-            currentQuestionIndex++;
-        }
-    }
 
     public void updateScores(Map<String, Integer> newScores) {
         SwingUtilities.invokeLater(() -> {

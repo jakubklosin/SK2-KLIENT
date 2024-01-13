@@ -15,21 +15,25 @@ public class DataListener {
     private boolean isRunning;
     private Consumer<Map<String, Integer>> onScoreUpdate;
     private Consumer<List<String>> onUserJoin;
+    private Consumer<String> onHostDisconnect;
     private Consumer<String> onStatusUpdate;
 
     public DataListener(NetworkConnection networkConnection) {
         this.networkConnection = networkConnection;
         this.isRunning = true;
-       this.listeningThread = new Thread(this::run);
+        this.listeningThread = new Thread(this::run);
         this.listeningThread.start();
     }
 
     public void setOnStatusUpdate(Consumer<String> onStatusUpdate) {
         this.onStatusUpdate = onStatusUpdate;
     }
-
     public void setOnUserJoin(Consumer<List<String>> onUserJoin) {
         this.onUserJoin = onUserJoin;
+    }
+
+    public void setOnHostDisconnect(Consumer<String> onHostDisconnect) {
+        this.onHostDisconnect = onHostDisconnect;
     }
 
     private void run() {
@@ -45,7 +49,6 @@ public class DataListener {
 
                 if (jsonObject.has("usersJoined")) {
                     JSONArray usersArray = jsonObject.getJSONArray("usersJoined");
-                    System.out.println(usersArray);
                     List<String> userNames = new ArrayList<>();
                     for (int i = 0; i < usersArray.length(); i++) {
                         userNames.add(usersArray.getString(i));
@@ -55,17 +58,16 @@ public class DataListener {
                     }
                 }
 
-                if (jsonObject.has("status")) {
-                    String status = jsonObject.getString("status");
-                    System.out.println(status);
-                    if (onStatusUpdate != null) {
-                        onStatusUpdate.accept(status);
-                    }
-                }
+//                if (jsonObject.has("status")) {
+//                    String status = jsonObject.getString("status");
+//                    System.out.println(status);
+//                    if (onStatusUpdate != null) {
+//                        onStatusUpdate.accept(status);
+//                    }
+//                }
 
                 if (jsonObject.has("users")) {
                     JSONArray usersArray = jsonObject.getJSONArray("users");
-                    System.out.println(usersArray);
                     Map<String, Integer> userScores = new HashMap<>();
                     for (int i = 0; i < usersArray.length(); i++) {
                         JSONObject userObject = usersArray.getJSONObject(i);
@@ -77,7 +79,15 @@ public class DataListener {
                         onScoreUpdate.accept(userScores);
                     }
                 }
+                if(jsonObject.has("host")){
+                    String status = jsonObject.getString("host");
+                    System.out.println(status);
 
+                    if (status.equals("disconnected") && onHostDisconnect != null) {
+                        onHostDisconnect.accept(status);
+                    }
+                }
+//                // Dodaj obsługę innych przypadków, jeśli jest to potrzebne
             } catch (Exception e) {
                 e.printStackTrace();
             }

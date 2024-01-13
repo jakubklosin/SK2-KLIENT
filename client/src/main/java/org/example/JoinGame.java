@@ -162,12 +162,14 @@ public class JoinGame {
         SwingUtilities.invokeLater(() -> {
             if (response.has("pytania")) {
                 JSONArray questions = response.getJSONArray("pytania");
-
-                // Rozpoczęcie nowej sesji quizu z pytaniami
                 DataListener dataListener = new DataListener(networkConnection);
-                // Teraz przekazujemy dataListener jako argument do konstruktora GameSession
+
+                // Utwórz instancję GameSession z dataListener
                 GameSession gameSession = new GameSession(frame, roomCode, playerName, networkConnection, dataListener);
                 gameSession.setQuestionsList(questions);
+
+                // Ustaw callbacki w dataListener
+                // (Jeśli są inne callbacki do ustawienia)
             } else {
                 JOptionPane.showMessageDialog(frame, "Błąd: " + response.toString());
             }

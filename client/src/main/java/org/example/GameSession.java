@@ -9,6 +9,7 @@ import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 public class GameSession {
     private JFrame frame;
@@ -16,14 +17,22 @@ public class GameSession {
     private CardLayout cardLayout;
     private JPanel mainPanel;
     private JButton selectedAnswerButton = null; //Aktualnie wybrana odpowiedz
-    private String playerName;
+    private String roomCode; // Kod pokoju
+    private String playerName; // Nazwa gracza
     private int currentQuestionIndex = 0;
+    private int userScore = 0;
     private NetworkConnection networkConnection;
+    private DataListener dataListener;
     public GameSession(JFrame frame, String roomCode, String playerName, NetworkConnection networkConnection, DataListener dataListener) {
         this.frame = frame;
+        this.roomCode = roomCode;
         this.playerName = playerName;
         this.networkConnection = networkConnection;
-        dataListener.setOnStatusUpdate(this::handleStatusUpdate);
+        this.dataListener = dataListener; // Ustawienie przekazanego dataListener
+
+        // Teraz możesz bezpiecznie użyć dataListener
+        this.dataListener.setOnHostDisconnect(this::handleHostDisconnect);
+
         this.questionsList = new ArrayList<>();
         this.cardLayout = new CardLayout();
         this.mainPanel = new JPanel(cardLayout);
@@ -35,29 +44,13 @@ public class GameSession {
         for (int i = 0; i < questions.length(); i++) {
             questionsList.add(questions.getJSONObject(i));
         }
-
-        currentQuestionIndex = 0;
+        // Wyświetlenie pytań na całym oknie po ich ustawieniu
+        //SwingUtilities.invokeLater(this::displayQuestions);
+        currentQuestionIndex = 0; //Reset biezacego indeksu pytania przy ustawianiu nowej listy pytań
         displayQuestion();
     }
 
-    private void handleStatusUpdate(String status) {
-        SwingUtilities.invokeLater(() -> {
-            switch (status) {
-                case "nextRound":
-                    moveToNextQuestion();
-                    break;
-                case "nextRound5":
-                    showTimeWarningAndMoveToNextQuestion();
-                    break;
-                case "end":
-                    displayEndOfQuiz();
-                    break;
-                case "start":
-                    displayQuestion();
-                    break;
-                default: System.out.println(status);}
-        });
-    }
+
 
     private void displayQuestion() {
         // Usunięcie wszystkich poprzednich komponentów
@@ -82,6 +75,7 @@ public class GameSession {
                     sendAnswerToServer(answerID);
                     if(answerID == 0){
                         selectedAnswerButton.setBackground(Color.decode("#98FF98"));
+                        userScore++;
                     }else {
                         selectedAnswerButton.setBackground(Color.decode("#D24545"));
                     }
@@ -124,47 +118,71 @@ public class GameSession {
         frame.repaint();
     }
 
-    private void moveToNextQuestion() {
-        currentQuestionIndex++;
-        if (currentQuestionIndex < questionsList.size()) {
-            displayQuestion(); // Wyświetlenie następnego pytania
-        } else {
-            displayEndOfQuiz(); // Wyświetlenie końca quizu
-        }
-    }
-
-    // Metoda do wyświetlenia ostrzeżenia o czasie i przejścia do następnego pytania
-    private void showTimeWarningAndMoveToNextQuestion() {
-        JLabel timeWarningLabel = new JLabel("5 sekund");
-        timeWarningLabel.setFont(new Font("Arial", Font.BOLD, 48));
-        timeWarningLabel.setHorizontalAlignment(JLabel.CENTER);
-        frame.getContentPane().add(timeWarningLabel, BorderLayout.NORTH);
-
-        Timer timer = new Timer(5000, e -> moveToNextQuestion());
-        timer.setRepeats(false);
-        timer.start();
-
-        frame.revalidate();
-        frame.repaint();
-    }
 
 
     private void displayEndOfQuiz() {
         frame.getContentPane().removeAll();
 
+        // Etykieta "Koniec quizu"
         JLabel endLabel = new JLabel("Koniec quizu");
-        endLabel.setFont(new Font("Arial", Font.BOLD, 30)); // Zwiększenie czcionki
-        endLabel.setHorizontalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w poziomie
-        endLabel.setVerticalAlignment(JLabel.CENTER); // Wyśrodkowanie etykiety w pionie
+        endLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        endLabel.setHorizontalAlignment(JLabel.CENTER);
+        endLabel.setVerticalAlignment(JLabel.CENTER);
 
+        // Deklaracja etykiety "Zdobyłeś x punktów"
+        JLabel scoreLabel;
+
+        if(userScore==0 || userScore==5){
+            scoreLabel = new JLabel("Zdobyłeś " + userScore + " punktów");
+        } else if (userScore==1) {
+            scoreLabel = new JLabel("Zdobyłeś " + userScore + " punkt");
+        }
+        else {
+            scoreLabel = new JLabel("Zdobyłeś " + userScore + " punkty");
+        }
+
+        // Ustawienie stylu dla scoreLabel
+        scoreLabel.setFont(new Font("Arial", Font.BOLD, 24));
+        scoreLabel.setHorizontalAlignment(JLabel.CENTER);
+        scoreLabel.setVerticalAlignment(JLabel.CENTER);
+
+        // Panel końcowy
         JPanel endPanel = new JPanel();
-        endPanel.setLayout(new GridBagLayout()); // Używamy GridBagLayout dla wyśrodkowania komponentu
-        endPanel.add(endLabel);
+        endPanel.setLayout(new GridBagLayout());
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridwidth = GridBagConstraints.REMAINDER;
+        gbc.fill = GridBagConstraints.HORIZONTAL;
+        gbc.insets = new Insets(10, 0, 10, 0);
+
+        endPanel.add(endLabel, gbc);
+        endPanel.add(scoreLabel, gbc); // Dodanie etykiety z wynikiem
         frame.getContentPane().add(endPanel, BorderLayout.CENTER);
 
         frame.revalidate();
         frame.repaint();
     }
+
+    // Metoda do obsługi rozłączenia
+    private void handleHostDisconnect(String status) {
+        if (status.equals("disconnected")) {
+            displayDisconnectScreen();
+        }
+    }
+
+    private void displayDisconnectScreen() {
+        frame.getContentPane().removeAll();
+
+        JLabel disconnectLabel = new JLabel("Koniec quizu, rozłączono z hostem");
+        disconnectLabel.setFont(new Font("Arial", Font.BOLD, 30));
+        disconnectLabel.setHorizontalAlignment(JLabel.CENTER);
+        disconnectLabel.setVerticalAlignment(JLabel.CENTER);
+
+        frame.getContentPane().add(disconnectLabel, BorderLayout.CENTER);
+
+        frame.revalidate();
+        frame.repaint();
+    }
+
 
 
     private JPanel createQuestionPanel(JSONObject question) {
@@ -216,7 +234,7 @@ public class GameSession {
             JSONObject answerJson = new JSONObject();
             answerJson.put("action","answering");
             answerJson.put("nickname", playerName);
-            answerJson.put("numer pytania", currentQuestionIndex + 1);
+            answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
             answerJson.put("answerID", answerID);
 
             String jsonStr = answerJson.toString();
@@ -233,5 +251,4 @@ public class GameSession {
             e.printStackTrace();
         }
     }
-
 }
