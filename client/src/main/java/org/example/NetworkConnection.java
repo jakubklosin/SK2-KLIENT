@@ -21,7 +21,6 @@ public class NetworkConnection {
 
     private void setupNetwork() {
         try {
-            //172.20.10.8
             socket = new Socket("localhost", 5555);
             out = socket.getOutputStream();
             in = socket.getInputStream();
@@ -99,18 +98,5 @@ public class NetworkConnection {
             bytesRead += result;
         }
         return data;
-    }
-
-    public String receive(int length) throws IOException {
-        byte[] data = new byte[length];
-        int bytesRead = 0;
-        while (bytesRead < length) {
-            int result = in.read(data, bytesRead, length - bytesRead);
-            if (result == -1) {
-                throw new IOException("End of stream reached");
-            }
-            bytesRead += result;
-        }
-        return new String(data);
     }
 }

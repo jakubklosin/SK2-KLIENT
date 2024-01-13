@@ -96,10 +96,8 @@ public class JoinGame {
                     joinRequest.put("kod pokoju", roomNumberField.getText());
                     String jsonStr = joinRequest.toString();
 
-                    // Wysyłanie żądania dołączenia do serwera
                     sendJoinRequest(jsonStr);
 
-                    // Odbieranie odpowiedzi od serwera w nowym wątku
                     receiveServerResponse();
                 } catch (Exception ex) {
                     ex.printStackTrace();
@@ -123,7 +121,6 @@ public class JoinGame {
                 joinRequest.put("nickname", playerName);
             }
 
-            // Wysyłanie żądania
             String updatedJsonStr = joinRequest.toString();
             int messageLength = updatedJsonStr.getBytes().length;
             ByteBuffer buffer = ByteBuffer.allocate(4);
@@ -141,7 +138,7 @@ public class JoinGame {
     private void receiveServerResponse() {
         new Thread(() -> {
             try {
-                // Odbieranie długości odpowiedzi
+                // Odbieranie długości odpowiedzi, serwer najpierw wysyla dlugosc
                 byte[] lengthBytes = networkConnection.receiveBytes(4);
                 ByteBuffer wrapped = ByteBuffer.wrap(lengthBytes);
                 int length = wrapped.getInt();
@@ -164,12 +161,10 @@ public class JoinGame {
                 JSONArray questions = response.getJSONArray("pytania");
                 DataListener dataListener = new DataListener(networkConnection);
 
-                // Utwórz instancję GameSession z dataListener
+                // Utwórzenie instancji GameSession
                 GameSession gameSession = new GameSession(frame, roomCode, playerName, networkConnection, dataListener);
                 gameSession.setQuestionsList(questions);
 
-                // Ustaw callbacki w dataListener
-                // (Jeśli są inne callbacki do ustawienia)
             } else {
                 JOptionPane.showMessageDialog(frame, "Błąd: " + response.toString());
             }

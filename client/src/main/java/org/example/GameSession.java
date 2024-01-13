@@ -9,16 +9,15 @@ import java.awt.*;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class GameSession {
     private JFrame frame;
     private List<JSONObject> questionsList;
     private CardLayout cardLayout;
     private JPanel mainPanel;
-    private JButton selectedAnswerButton = null; //Aktualnie wybrana odpowiedz
-    private String roomCode; // Kod pokoju
-    private String playerName; // Nazwa gracza
+    private JButton selectedAnswerButton = null;
+    private String roomCode;
+    private String playerName;
     private int currentQuestionIndex = 0;
     private int userScore = 0;
     private NetworkConnection networkConnection;
@@ -28,9 +27,8 @@ public class GameSession {
         this.roomCode = roomCode;
         this.playerName = playerName;
         this.networkConnection = networkConnection;
-        this.dataListener = dataListener; // Ustawienie przekazanego dataListener
+        this.dataListener = dataListener;
 
-        // Teraz możesz bezpiecznie użyć dataListener
         this.dataListener.setOnHostDisconnect(this::handleHostDisconnect);
 
         this.questionsList = new ArrayList<>();
@@ -44,8 +42,6 @@ public class GameSession {
         for (int i = 0; i < questions.length(); i++) {
             questionsList.add(questions.getJSONObject(i));
         }
-        // Wyświetlenie pytań na całym oknie po ich ustawieniu
-        //SwingUtilities.invokeLater(this::displayQuestions);
         currentQuestionIndex = 0; //Reset biezacego indeksu pytania przy ustawianiu nowej listy pytań
         displayQuestion();
     }
@@ -55,7 +51,7 @@ public class GameSession {
     private void displayQuestion() {
         // Usunięcie wszystkich poprzednich komponentów
         frame.getContentPane().removeAll();
-        frame.setLayout(new BorderLayout()); // Ustawienie BorderLayout dla ramki
+        frame.setLayout(new BorderLayout());
 
         if (currentQuestionIndex < questionsList.size()) {
             // Pobranie bieżącego pytania na podstawie indeksu
@@ -69,8 +65,7 @@ public class GameSession {
             JButton nextButton = new JButton("Dalej");
             nextButton.addActionListener(e -> {
                 if (selectedAnswerButton != null) {
-                    // Podświetlenie wybranej odpowiedzi na zielono
-
+                    // Podświetlenie wybranej odpowiedzi na zielono lub czerwono
                     int answerID = Integer.parseInt(selectedAnswerButton.getActionCommand());
                     sendAnswerToServer(answerID);
                     if(answerID == 0){
@@ -209,7 +204,7 @@ public class GameSession {
             int answerID = answerObj.getInt("answerID");
 
             JButton answerButton = new JButton(answerText);
-            answerButton.setActionCommand(String.valueOf(answerID)); // Przypisanie answerID jako action command
+            answerButton.setActionCommand(String.valueOf(answerID));
             answerButton.setMaximumSize(new Dimension(Integer.MAX_VALUE, answerButton.getMinimumSize().height));
             answerButton.addActionListener(e -> handleAnswer(answerButton, answerText, Integer.parseInt(answerButton.getActionCommand())));
             buttonsPanel.add(answerButton);
@@ -234,7 +229,7 @@ public class GameSession {
             JSONObject answerJson = new JSONObject();
             answerJson.put("action","answering");
             answerJson.put("nickname", playerName);
-            answerJson.put("numer pytania", currentQuestionIndex + 1); // Zakładając, że numeracja pytań zaczyna się od 1
+            answerJson.put("numer pytania", currentQuestionIndex + 1);
             answerJson.put("answerID", answerID);
 
             String jsonStr = answerJson.toString();

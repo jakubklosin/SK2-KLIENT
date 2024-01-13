@@ -28,7 +28,6 @@ public class HostGameView {
         this.playerProgressBars = new HashMap<>();
         this.networkConnection = networkConnection;
 
-        // Ustawienie metody callback w DataListener
         dataListener.setOnScoreUpdate(this::updateScores);
 
         initializeHostGameView();
@@ -83,7 +82,7 @@ public class HostGameView {
 
     private void addNewPlayer(String playerName, int score) {
         playerScores.put(playerName, score);
-        JProgressBar progressBar = new JProgressBar(0, 50); // Zakładając, że maksymalna liczba punktów to 50
+        JProgressBar progressBar = new JProgressBar(0, 50); // Maksymalna liczba punktow to 50, po 10 za odpowiedź
         progressBar.setValue(score);
         progressBar.setStringPainted(true);
         playerProgressBars.put(playerName, progressBar);

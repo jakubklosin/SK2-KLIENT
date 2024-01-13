@@ -21,7 +21,7 @@ public class QuizClient {
     private DefaultListModel<String> userModel;
     private HostGameView hostGameView;
     private NetworkConnection networkConnection;
-    private DataListener dataListener; // Dodano DataListener
+    private DataListener dataListener;
 
     public QuizClient(JFrame frame) {
         this.frame = frame;
@@ -32,9 +32,9 @@ public class QuizClient {
         this.networkConnection = new NetworkConnection();
         this.userModel = new DefaultListModel<>();
         this.userList = new JList<>(userModel);
-        this.dataListener = new DataListener(networkConnection); // Upewnij się, że to jest przed użyciem dataListener
-        this.dataListener.setOnUserJoin(this::updateUserList); // Ustawienie metody callback
-        this.dataListener.setOnScoreUpdate(this::updateHostGameView); // Ustawienie metody callback
+        this.dataListener = new DataListener(networkConnection);
+        this.dataListener.setOnUserJoin(this::updateUserList);
+        this.dataListener.setOnScoreUpdate(this::updateHostGameView);
         initializeQuiz(frame);
     }
 
@@ -84,7 +84,7 @@ public class QuizClient {
             for (int i = 0; i < answerFields.length; i++) {
                 JSONObject answerJson = new JSONObject();
                 answerJson.put("answerText", answerFields[i].getText());
-                answerJson.put("answerID", i); // Dodanie identyfikatora odpowiedzi
+                answerJson.put("answerID", i); // Identyfikator odpowiedzi, po nim wiadomo, ktora jest poprawna
                 answersJson.put(answerJson);
             }
 
@@ -93,7 +93,7 @@ public class QuizClient {
             questionsAndAnswersList.add(questionJson);
 
             if (questionIndex == 4) {
-                sendToServer(); // Wysyłanie danych do serwera
+                sendToServer();
             } else {
                 cardLayout.show(mainPanel, "QuestionCard" + (questionIndex + 1));
             }
@@ -181,7 +181,7 @@ public class QuizClient {
         startGameButton.setOpaque(true);
         startGameButton.setBorderPainted(false);
 
-        // Dodanie efektu hover
+        // Efekt hover
         startGameButton.addMouseListener(new java.awt.event.MouseAdapter() {
             public void mouseEntered(java.awt.event.MouseEvent evt) {
                 startGameButton.setBackground(new Color(100, 200, 255)); // Ciemniejszy kolor przy najechaniu
